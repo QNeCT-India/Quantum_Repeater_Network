@@ -15,10 +15,11 @@
     - [Fundamental operations on quantum system](#fundamental-operations-on-quantum-system)
     - [Entanglement Criterion](#entanglement-criterion)
     - [Quantum Network](#quantum-network)
-4. [Contributing](#contributing)
-5. [License](#license)
-6. [Contact](#contact)
-7. [Acknowledgements](#acknowledgements)
+4. [Documentation](#documentation)
+5. [Contributing](#contributing)
+6. [License](#license)
+7. [Contact](#contact)
+8. [Acknowledgements](#acknowledgements)
 
 ## About
 
@@ -51,21 +52,23 @@ You must have pre installed python environments such as [**Anaconda**](https://w
 
 ### Installation
 
-A step-by-step guide to install and set up the project.
-
 1.  Clone the repo
     ```sh
-    https://github.com/QNeCT-India
+    git clone https://github.com/QNeCT-India/Quantum_Repeater_Network.git
     ```
 2.  Navigate to the project directory
     ```sh
-    cd your_repo_name
+    cd Quantum_Repeater_Network
+    ```
 3.  Install required packages
     ```sh
-    npm install
-4.  (Optional) Set up environment variables in a `.env` file
-    ```env
-    API_KEY = 'ENTER YOUR API';
+    pip install -r requirements.txt
+    ```
+4.  Run the interactive GUI
+    ```sh
+    streamlit run app.py
+    ```
+    or run the library directly from a script, e.g. `python mainQRN.py`.
 
 ## Functions Overview
 
@@ -93,7 +96,7 @@ Quantum states are represented either by a complex wave function or a complex co
 ### Entanglement Criterion
 A class name **Ebit** is defined to check the nature of entanglement of a given two-qubit quantum state. This class uses different methods to check the entanglement criteria. If user do not use any specific method then by default *concurrence* is used as a method to check the entanglement.
 
-Source: [Ebit](https://github.com/SatishS11/QNeCT-India/Quantum_Repeater_Network/qrnetwork/primaryfn.py#L229-L261)
+Source: [Ebit](https://github.com/QNeCT-India/Quantum_Repeater_Network/blob/main/qrnetwork/primaryfn.py#L294-L325)
 
 ```sh
 Ebit(state)/ Ebit(state,method='method')
@@ -122,7 +125,7 @@ Ebit(state)/ Ebit(state,method='method')
 The major challange of any quantum comnnunication scheme is the communication distance due to quickly loss of weak quantum signals. To overcome this challenge, a concept of quantum network is introduced where intermediate nodes are installed between two communicating parties and some actions are performed at these nodes to directly connect the two parties. Here, we are introducing repeater-based quantum network where, quantum repeaters are installed at intermediate nodes and entangled stated is distributed. Finally, entanglement swapping is performed at those nodes to entangle the two communicating parties.\
 We defined a class **QRep** for the quantum repeater network. It takes a list of shared entangled state as input and give the final entangled state formed between the two end nodes with its fidelity value. To make it more realistic, one can also check the output under the all possible physical noises available during the whole entanglement generation process.
 
-Source: [QRep](https://github.com/SatishS11/QNeCT-India/Quantum_Repeater_Network/qrnetwork/network.py#L180-L266)
+Source: [QRep](https://github.com/QNeCT-India/Quantum_Repeater_Network/blob/main/qrnetwork/network.py#L180-L265)
 ```sh
 QRep([shared state]).linear()/ 
 QRep([shared state]).noise(noise parameters).linear()
@@ -148,32 +151,21 @@ QRep([shared state]).noise(noise parameters).linear()
 >
 > Output: **value**
 
-<!-- Run the development server:
-```sh
-npm start
-``` -->
+## Documentation
+
+Extended documentation (architecture notes, background reading, and per-module reference material as it is written) lives in [`docs/`](docs/README.md). Start there for anything beyond this overview.
 
 ## Contributing
 
-<!-- Guidelines for others who want to contribute to your project.
-
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request -->
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to propose changes, the branch/commit conventions used on this project, and the current state of testing.
 
 ## License
 
-Distributed under the MIT License. See `LICENSE.txt` for more information.
+This project does not yet have a formal license file. Until one is added, all rights are reserved by the QNeCT-India project; please open an issue if you need clarification before reusing this code.
 
 ## Contact
 
-Your Name - [@your_twitter](https://twitter.com/your_twitter) - email@example.com
-
-Project Link: [https://github.com/QNeCT-India/Quantum_Repeater_Network.git](https://github.com/QNeCT-India/Quantum_Repeater_Network.git)
+Project Link: [https://github.com/QNeCT-India/Quantum_Repeater_Network](https://github.com/QNeCT-India/Quantum_Repeater_Network)
 
 ## Acknowledgements
 
