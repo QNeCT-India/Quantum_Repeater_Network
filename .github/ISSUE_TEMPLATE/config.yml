@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question about using QNeCT
+    url: https://github.com/QNeCT-India/Quantum_Repeater_Network/discussions
+    about: For general usage questions once GitHub Discussions is enabled (see docs/README.md governance notes). Until then, open a Research Discussion issue instead.

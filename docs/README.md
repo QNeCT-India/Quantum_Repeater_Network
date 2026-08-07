@@ -42,6 +42,29 @@ don't have to guess:
 - [`how-to/`](how-to/README.md) — stub
 - [`reference/`](reference/README.md) — stub
 
+## Project governance
+
+Collaboration/process material (how to contribute, issue and PR
+templates, code ownership, labels, milestones) is **deliberately kept
+out of this Diataxis structure** and lives instead in the repository
+root and `.github/`, where GitHub expects to find it:
+
+- [`../CONTRIBUTING.md`](../CONTRIBUTING.md) — start here if you're a
+  new contributor; it's written to be self-contained.
+- [`../.github/PULL_REQUEST_TEMPLATE.md`](../.github/PULL_REQUEST_TEMPLATE.md)
+  and [`../.github/ISSUE_TEMPLATE/`](../.github/ISSUE_TEMPLATE/)
+- [`../.github/CODEOWNERS`](../.github/CODEOWNERS) — who reviews what
+- [`../.github/labels.yml`](../.github/labels.yml) — the label taxonomy
+- [`../.github/MILESTONES.md`](../.github/MILESTONES.md) — the proposed
+  milestone structure
+
+This is a second, orthogonal axis from the tutorial/how-to/reference/
+explanation split above: Diataxis organizes documentation *about the
+software*; governance files answer *how the project runs as a
+collaboration*, and GitHub's own tooling (issue/PR template discovery,
+CODEOWNERS review requests) only works if they stay in these specific
+locations rather than being folded into `docs/`.
+
 ## Planned follow-up (not yet approved — listed here for visibility)
 
 - Populate `reference/` with one page per `qrnetwork` module (`primaryfn`,

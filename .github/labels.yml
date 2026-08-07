@@ -1,0 +1,62 @@
+# Proposed GitHub label taxonomy for QNeCT-India/Quantum_Repeater_Network.
+#
+# STATUS: PROPOSAL ONLY. This file is not wired up to any automation —
+# nothing currently reads it or applies these labels to the live repo.
+# It exists as the single source of truth for the taxonomy so that a
+# maintainer (or a future CI step, once CI is introduced in a later
+# phase) can apply it with a tool such as `gh label create` or
+# `github-label-sync` in one pass instead of clicking through the UI
+# label-by-label.
+#
+# Design: kept deliberately flat and small rather than using a
+# prefixed/tiered scheme (e.g. `type:bug`, `area:physics`) — for a
+# project this size, one label per concept is easier for occasional
+# student contributors to scan and pick from than a taxonomy with
+# multiple axes. Revisit this if the label list grows past ~20 entries
+# and starts feeling cluttered.
+#
+# The repo's current default GitHub labels (bug, documentation,
+# duplicate, enhancement, good first issue, help wanted, invalid,
+# question, wontfix) overlap with several entries below — where they
+# do, this file just documents the same label with a description tuned
+# to this project; no rename is implied. `duplicate`, `invalid`,
+# `question`, and `wontfix` aren't relisted here since they're generic
+# GitHub defaults that need no project-specific description.
+
+labels:
+  - name: "bug"
+    color: "d73a4a"
+    description: "Something doesn't behave as intended (software or numerical)"
+  - name: "enhancement"
+    color: "a2eeef"
+    description: "New capability or improvement to existing behavior"
+  - name: "refactoring"
+    color: "1d76db"
+    description: "Structure/readability/maintainability change with no intended behavior change"
+  - name: "performance"
+    color: "fbca04"
+    description: "Speed or memory improvement"
+  - name: "documentation"
+    color: "0075ca"
+    description: "Documentation-only change"
+  - name: "testing"
+    color: "5319e7"
+    description: "Test coverage or test infrastructure"
+  - name: "simulation"
+    color: "0e8a16"
+    description: "Simulator/runtime behavior (qrnetwork package, app.py orchestration)"
+  - name: "physics"
+    color: "006b75"
+    description: "Physical model or numerical correctness (algorithms, noise models, protocols)"
+  - name: "architecture"
+    color: "c2e0c6"
+    description: "Module organization, dependencies, package structure"
+  - name: "discussion"
+    color: "d4c5f9"
+    description: "Open-ended question without a settled answer yet"
+  - name: "good first issue"
+    color: "7057ff"
+    description: "Well-scoped and suitable for a first-time contributor"
+  - name: "help wanted"
+    color: "008672"
+    description: "Maintainers are actively looking for outside help on this"

@@ -1,0 +1,34 @@
+# CODEOWNERS
+#
+# This file requests a review from the listed owners on any pull request
+# touching a matching path. It does NOT by itself block merging — that
+# requires enabling "Require review from Code Owners" in the branch
+# protection settings for `main` (currently unset; see the Governance
+# Report for the recommended settings).
+#
+# Design: kept intentionally minimal for the project's current size (two
+# maintainers, a handful of collaborators with read-only access, no
+# formal sub-teams yet). One blanket rule covers the whole repository;
+# a couple of explicit rules exist only to document intent for
+# `docs/` and `.github/`, since GitHub gives the *last* matching rule
+# priority — right now they're redundant with the wildcard below, but
+# they establish the file structure a maintainer can later edit in place
+# (e.g. adding `/qrnetwork/network.py @some-physics-lead`) without
+# having to redesign the whole file. Students are deliberately not
+# listed as owners of any path; add contributors here only once they
+# have a standing review responsibility, not merely write access.
+#
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default: every file requires review from a maintainer unless a more
+# specific rule below says otherwise.
+*                    @ToxicLabs-iiser @SatishS11
+
+# Documentation
+/docs/               @ToxicLabs-iiser @SatishS11
+/readme.md           @ToxicLabs-iiser @SatishS11
+/index.md            @ToxicLabs-iiser @SatishS11
+/CONTRIBUTING.md      @ToxicLabs-iiser @SatishS11
+
+# GitHub workflow / governance configuration
+/.github/            @ToxicLabs-iiser @SatishS11
