@@ -103,6 +103,45 @@ class Q: # creating objects for quantum states and operators
             raise ValueError("Density matrix can only be computed for pure states (column vectors).")
         return Q(self.state @ self.state.conj().T)
 
+    def trace(self): # trace
+        return float(np.trace(self.state).real)
+
+    def partial_trace(self, qubits: list[int]):  # partial trace
+        """Return density matrix after qubits traced out"""
+        state = self.state
+        n_qubits = int( np.log2(self.state.shape[0]) )
+        n = n_qubits
+        for q in qubits:
+                if not (0 <= q < n_qubits):
+                    raise ValueError(f"qubit {q} out of range for n_qubits={n_qubits}")
+        for q in sorted(qubits, reverse=True):
+            reshaped = state.reshape([2] * (2 * n))
+            traced = np.trace(reshaped, axis1=q, axis2=q + n)
+            dim = 2 ** (n - 1)
+            state = traced.reshape(dim, dim)
+            n -= 1
+        return Q(state)
+    
+    def expand_mixed(self, kept_positions: list[int], total_qubits: int): # expand with maximally mixed
+        """Return density matrix expanded with maximally mixed state."""
+        rho_kept = self.state
+        missing = [q for q in range(total_qubits) if q not in kept_positions]
+        n_missing = len(missing)
+
+        identity_block = np.eye(2**n_missing, dtype=complex)
+        combined = np.kron(rho_kept, identity_block) / (2**n_missing)   # [0,3,1,2,4,7,5,6] -> [0,1,2,3,4,5,6,7]]
+
+        order = list(kept_positions) + missing                 # [0,3,1,2]
+        inverse_order = list(np.argsort(order))                # [0,2,3,1]
+        row_perm = inverse_order                               # [0,2,3,1]
+        col_perm = [total_qubits + p for p in inverse_order]   # [4,6,7,5]
+        perm = row_perm + col_perm                             # [0,2,3,1,4,6,7,5]
+
+        tensor = combined.reshape([2] * (2 * total_qubits))    # [0,3,1,2,4,7,5,6] (change according to [0,2,3,1,4,6,7,5])
+        tensor = np.transpose(tensor, perm)                    # [0,1,2,3,4,5,6,7]
+        dim = 2**total_qubits
+        return Q(tensor.reshape(dim, dim))   
+
     # ----- Random state generators -----
     class rand:
         @staticmethod
@@ -268,11 +307,11 @@ class Qp:
         # Case 3: one pure, one mixed
         elif Is(self.state1).ket() and Is(self.state2).square():
             fidelity = np.abs((Q(self.state1).d() @ self.state2 @ self.state1).item())
-            fidelity = np.sqrt(fidelity)
+            # fidelity = np.sqrt(fidelity)
             return round(fidelity, 4)
         elif Is(self.state1).square() and Is(self.state2).ket():
             fidelity = np.abs((Q(self.state2).d() @ self.state1 @ self.state2).item())
-            fidelity = np.sqrt(fidelity)
+            # fidelity = np.sqrt(fidelity)
             return round(fidelity, 4)
         else:
             raise ValueError("Unsupported input types for fidelity.")

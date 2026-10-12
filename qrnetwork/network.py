@@ -1,8 +1,13 @@
+from __future__ import annotations
 import numpy as np
 from . import qteleportation
 from . import primaryfn
+from . import Q
 from sympy import Matrix
 import warnings
+from dataclasses import dataclass, field
+from enum import Enum, auto
+
 # Change the default warning format
 def custom_warning_format(message, category, filename, lineno, line=None):
     return f"⚠️ {message}\n" # Just return warn message not category, filename, etc.
@@ -139,12 +144,23 @@ class eswap:
         # --- Dephasing ---
         lam_t = dephasing_coeff(T_p, T_dp, L)
         # lam_t_coeff1 = (1 - lam_t) * np.eye(16)
-        lam_t_coeff2 = (np.kron(np.kron(np.eye(2), 
-                                                np.kron(primaryfn.Q.Pauli.Z, primaryfn.Q.Pauli.Z)), 
-                                                np.eye(2)))
-        rho2 = (1 - lam_t) * rho1 + \
-               lam_t * (lam_t_coeff2 @ rho1 @ primaryfn.Q(lam_t_coeff2).d())
-        rho2 = rho2 / np.trace(rho2)
+        # lam_t_coeff2 = (np.kron(np.kron(np.eye(2), 
+        #                                         np.kron(primaryfn.Q.Pauli.Z, primaryfn.Q.Pauli.Z)), 
+        #                                         np.eye(2)))
+        # rho2 = (1 - lam_t) * rho1 + \
+        #        lam_t * (lam_t_coeff2 @ rho1 @ primaryfn.Q(lam_t_coeff2).d())
+        # rho2 = rho2 / np.trace(rho2)
+
+        # --- Successive Dephasing Channels --- # Noise modelled only for 2nd and 3rd qubit
+        # For 2nd qubit
+        lam_t_coeff2 = np.kron( np.kron(np.eye(2),Q.Pauli.Z), np.eye(4))
+        rho2a = (1 - lam_t) * rho1 + lam_t * (lam_t_coeff2 @ rho1 @ primaryfn.Q(lam_t_coeff2).d())
+        rho2b = rho2a / np.trace(rho2a)
+        # For 3rd qubit
+        lam_t_coeff3 = np.kron( np.kron(np.eye(4),Q.Pauli.Z), np.eye(2))
+        rho2c = (1 - lam_t) * rho2b + lam_t * (lam_t_coeff3 @ rho2b @ primaryfn.Q(lam_t_coeff3).d())
+        rho2 = rho2c / np.trace(rho2c)
+        
         # --- Detector noise (clicking) ---
         alpha = clicking_coeff(eta, p_d)
         # alpha_coeff1 = alpha * np.eye(16)
@@ -167,7 +183,7 @@ class eswap:
                 continue
             obtained_state = post_meas / norm
             # enforce Hermiticity & normalization
-            obtained_state = (obtained_state + primaryfn.Q(obtained_state).d()) / 2
+            # obtained_state = (obtained_state + primaryfn.Q(obtained_state).d()) / 2
             obtained_state = obtained_state / np.trace(obtained_state)
             fidelity = primaryfn.Qp(desired_state, obtained_state).fid()
             results.append({"measurement_outcome": f"Bell-{i+1}",
@@ -264,3 +280,72 @@ class QRep:
                 raise ValueError("The shared states are not entangled.")
         else:
             raise ValueError("Incorrect dimensions of the shared state.")
+
+
+# ---------------------------------------------------------------------------
+# Chain Topology & Memory Slots
+# ---------------------------------------------------------------------------
+class SlotStatus(Enum):
+    EMPTY = auto()
+    PENDING = auto()
+    READY = auto()
+
+
+@dataclass
+class MemorySlot:
+    owner_node: Node
+    faces_node: Node
+    status: SlotStatus = SlotStatus.EMPTY
+    link: Link | None = None
+
+
+@dataclass
+class Link:
+    rho: Q
+    ready_time: float
+    left_slot: MemorySlot
+    right_slot: MemorySlot
+
+    @property
+    def left_node(self) -> Node:
+        return self.left_slot.owner_node
+
+    @property
+    def right_node(self) -> Node:
+        return self.right_slot.owner_node
+
+
+@dataclass
+class Node:
+    index: int
+    is_end_node: bool
+    left_slots: list[MemorySlot] = field(default_factory=list)    #List of parallel 'left memory slots'
+    right_slots: list[MemorySlot] = field(default_factory=list)   #List of parallel 'right memory slots'
+
+
+class RepeaterChain:
+    def __init__(self, rep_nodes: int, n_parallel_slots: int):
+        if rep_nodes < 1:
+            raise ValueError("rep_nodes must be >= 1 (need at least one repeater)")
+        if n_parallel_slots < 1:
+            raise ValueError("n_parallel_slots must be >= 1")
+
+        self.rep_nodes = rep_nodes
+        self.n_parallel_slots = n_parallel_slots
+        self.nodes: list[Node] = [Node(index=i, is_end_node=(i == 0 or i == self.rep_nodes + 1)) for i in self.nodes_indices()]
+        for i in self.links_indices():
+            j = i + 1
+            for _ in range(n_parallel_slots):
+                ith_mem = MemorySlot(owner_node= self.nodes[i], faces_node= self.nodes[j])
+                jth_mem = MemorySlot(owner_node=self.nodes[j], faces_node=self.nodes[i])
+                self.nodes[i].right_slots.append(ith_mem)
+                self.nodes[j].left_slots.append(jth_mem)
+
+    def nodes_indices(self) -> range:
+        return range(self.rep_nodes + 2)
+
+    def repeater_indices(self) -> range:
+        return range(1, self.rep_nodes + 1)
+
+    def links_indices(self) -> range:
+        return range(self.rep_nodes + 1)
