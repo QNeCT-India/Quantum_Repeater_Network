@@ -1,7 +1,10 @@
 import numpy as np
 from qrnetwork import *
+from qrnetwork.primaryfn import *
+from qrnetwork.StarProtocol import *
+
 # import time
-# from qrnetwork import Q, Qp, Is, Ebit, Teleport, Qrep
+#from qrnetwork import Q, Qp, Is, Ebit, Teleport, Qrep
 
 ## Define quantum states
 # ket0 = Q([[1], [0]])
@@ -95,11 +98,11 @@ from qrnetwork import *
 # print(results)
 
 ## Get output of linear quantum repeater network without noise
-shared_ent_state = [Qp(Q.Bell.psi_plus).op(),Qp(Q.Bell.phi_minus).op(),
-                    Qp(Q.Bell.phi_plus).op(),Qp(Q.Bell.psi_plus).op(), 
-                    Qp(Q.Bell.phi_minus).op()]
-# shared_ent_state = [Q.Bell.psi_plus,Q.Bell.psi_minus,Q.Bell.phi_plus,Q.Bell.phi_minus,Q.Bell.psi_plus]
-results = QRep(shared_ent_state).linear()
+# shared_ent_state = [Qp(Q.Bell.psi_plus).op(),Qp(Q.Bell.phi_minus).op(),
+#                     Qp(Q.Bell.phi_plus).op(),Qp(Q.Bell.psi_plus).op(), 
+#                     Qp(Q.Bell.phi_minus).op()]
+# # shared_ent_state = [Q.Bell.psi_plus,Q.Bell.psi_minus,Q.Bell.phi_plus,Q.Bell.phi_minus,Q.Bell.psi_plus]
+# results = QRep(shared_ent_state).linear()
 ## Get output of linear quantum repeater network with noise
 # start_time = time.time()
 # results = QRep(shared_ent_state).noise(L=40, T_p= 1e-6, T_dp = 1, eta = 0.3, p_d = 1e-8).linear()
@@ -109,4 +112,14 @@ results = QRep(shared_ent_state).linear()
 # print(f"Results: {results}\n Execution time: {elapsed_time} seconds")
 
 ## Print output
-print(results)
+#print(results)
+
+##PIECEMAKER_PROTOCOL
+#__all__ = ["piecemaker_protocol"]
+
+##FACTORY_PROTOCOL
+
+#__all__ =["factory_protocol"]
+
+
+
