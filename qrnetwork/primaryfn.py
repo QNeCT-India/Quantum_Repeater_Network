@@ -34,6 +34,25 @@ class Q: # creating objects for quantum states and operators
     # (they return a number, not a state) so they intentionally keep
     # returning a plain float - that was correct before and is unchanged.
 
+    def copy(self):
+            """Returns an independent deep copy of the quantum object."""
+            return Q(self.data.copy())
+
+    # ----- Basis State Generator -----
+    @staticmethod
+    def basis(dim, index=0):
+        """Generates computational basis ket |index> of dimension dim.
+    
+         Usage: Q.basis(2, 0) for |0>, Q.basis(2, 1) for |1>
+            """
+        if not (0 <= index < dim):
+            raise ValueError(
+                f"Index {index} out of range for dimension {dim}."
+            )
+        vec = np.zeros((dim, 1), dtype=complex)
+        vec[index, 0] = 1.0
+        return Q(vec)
+
     def __add__(self, other): # Addition (+)
         if isinstance(other, Q):
             return Q(self.state + other.state)
@@ -149,7 +168,7 @@ class Q: # creating objects for quantum states and operators
     
     # ----- Bell states -----
     class Bell:
-        phi_plus = np.array([[1], [0], [0], [1]], dtype=complex) / np.sqrt(2)
+        phi_plus = Q(np.array([[1], [0], [0], [1]], dtype=complex) / np.sqrt(2))
         phi_minus = np.array([[1], [0], [0], [-1]], dtype=complex) / np.sqrt(2)
         psi_plus = np.array([[0], [1], [1], [0]], dtype=complex) / np.sqrt(2)
         psi_minus = np.array([[0], [1], [-1], [0]], dtype=complex) / np.sqrt(2)
@@ -191,6 +210,117 @@ class Q: # creating objects for quantum states and operators
                 p = np.random.uniform(low=1/2, high=1.0)
             # If p is provided, use it directly
             return Q(p * bell_pure + (1 - p) * I4)
+
+# ----- Standard Single-Qubit Gates -----
+    class Gate:
+        H = (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=complex)
+        S = np.array([[1, 0], [0, 1j]], dtype=complex)
+        T = np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=complex)   
+
+
+# ============================================================
+# General controlled single-qubit gate
+# ============================================================
+    class ControlGate:
+
+        @staticmethod
+        def Cg(gate, n_qubits, control, target):
+            if control == target:
+                raise ValueError(
+                    "Control and target qubits must be different."
+                )
+
+            if not (0 <= control < n_qubits):
+                raise ValueError("Control qubit index out of range.")
+
+            if not (0 <= target < n_qubits):
+                raise ValueError("Target qubit index out of range.")
+
+            gate_arr = gate.state if isinstance(gate, Q) else gate
+            dim = 2**n_qubits
+            result = np.zeros((dim, dim), dtype=complex)
+
+            for basis_idx in range(dim):
+                bits = [
+                    (basis_idx >> (n_qubits - 1 - i)) & 1
+                    for i in range(n_qubits)
+                ]
+                if bits[control] == 0:
+                    result[basis_idx, basis_idx] = 1
+                else:
+                    for t in range(2):
+                        new_bits = bits.copy()
+                        new_bits[target] = t
+                        new_basis = 0
+                        for b in new_bits:
+                            new_basis = (new_basis << 1) | b
+                        result[new_basis, basis_idx] = gate_arr[
+                            t, bits[target]
+                        ]
+
+            return Q(result)
+
+        @staticmethod
+        def Cx(n_qubits, control, target):
+            return Q.ControlGate.Cg(Q.Pauli.X, n_qubits, control, target)
+
+        @staticmethod
+        def Cy(n_qubits, control, target):
+            return Q.ControlGate.Cg(Q.Pauli.Y, n_qubits, control, target)
+
+        @staticmethod
+        def Cz(n_qubits, control, target):
+            return Q.ControlGate.Cg(Q.Pauli.Z, n_qubits, control, target)
+
+    # ============================================================
+    # General SWAP gate
+    # ============================================================
+    @staticmethod
+    def SWAP(n_qubits, qubit1, qubit2):
+        if qubit1 == qubit2:
+            raise ValueError("The two qubits must be different.")
+
+        if not (0 <= qubit1 < n_qubits):
+            raise ValueError("qubit1 index out of range.")
+
+        if not (0 <= qubit2 < n_qubits):
+            raise ValueError("qubit2 index out of range.")
+
+        dim = 2**n_qubits
+        swap = np.zeros((dim, dim), dtype=complex)
+
+        for basis_idx in range(dim):
+            bits = [
+                (basis_idx >> (n_qubits - 1 - i)) & 1 for i in range(n_qubits)
+            ]
+            swapped_bits = bits.copy()
+            swapped_bits[qubit1], swapped_bits[qubit2] = (
+                swapped_bits[qubit2],
+                swapped_bits[qubit1],
+            )
+
+            new_basis = 0
+            for bit in swapped_bits:
+                new_basis = (new_basis << 1) | bit
+            swap[new_basis, basis_idx] = 1
+
+        return Q(swap)    
+
+
+#CNOT gate
+    CNOT = np.kron((Pauli.I + Pauli.Z) / 2 , Pauli.I) + np.kron((Pauli.I - Pauli.Z) / 2 , Pauli.X)
+
+# ============================================================
+# Post-Class Initialization: Wrap Static Gates & Operators in Q
+# ============================================================
+
+# 1. Standard Single-Qubit Gates
+Q.Gate.H = Q(Q.Gate.H, dims=[[2], [2]])
+Q.Gate.S = Q(Q.Gate.S, dims=[[2], [2]])
+Q.Gate.T = Q(Q.Gate.T, dims=[[2], [2]])
+
+# 2. Canonical CNOT
+Q.CNOT = Q(Q.CNOT, dims=[[2, 2], [2, 2]])
 
 
 class Is:
@@ -247,8 +377,23 @@ class Qp:
             raise ValueError("Both inputs must be 1D vectors.")
         return Q(self.state1 @ self.state2.conj().T)
     
-    def tp(self): # Tensor product
-        return Q(np.kron(self.state1, self.state2))
+    @staticmethod
+    def tp(*args):  # Tensor product (Arbitrary arguments or sequence)
+        if len(args) == 1 and isinstance(args[0], (list, tuple)):
+            args = args[0]
+
+        if len(args) == 0:
+            raise ValueError("tp requires at least one argument.")
+
+        q_objs = [item if isinstance(item, Q) else Q(item) for item in args]
+
+        # Combine underlying matrix states using fold
+        combined_matrix = fold(
+            np.kron, [q.state.copy() for q in q_objs]
+        )  
+
+        return Q(combined_matrix)
+
     
     def fid(self): # Fidelity
         # Case 1: both are pure states (kets)
@@ -324,3 +469,28 @@ class Ebit:
             return val
         else:
             raise ValueError("Input must be 4x1 ket or 4x4 density matrix.")
+
+#fold function for the repetetive operation application
+
+def fold(operation, objects):
+    """operation : callable (f(acc, item) -> acc)
+
+    objects   : list or tuple of elements to reduce
+    """
+    result = objects[0]
+    for obj in objects[1:]:
+        result = operation(result, obj)
+    return result
+
+# fold function for iterative operation reduction
+def fold(operation, objects):
+    """operation : callable (f(acc, item) -> acc)
+    objects   : list or tuple of elements to reduce
+    """
+    result = objects[0]
+    for obj in objects[1:]:
+        result = operation(result, obj)
+    return result
+
+
+
