@@ -394,7 +394,8 @@ class Gate:
         S = Q(np.array([[1, 0], [0, 1j]], dtype=complex))
         T = Q(np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=complex))
         #CNOT gate
-        CX = Q(np.kron((Pauli.I + Pauli.Z) / 2 , Pauli.I) + np.kron((Pauli.I - Pauli.Z) / 2 , Pauli.X))
+        CNOT= Q(np.kron((Pauli.I + Pauli.Z) / 2 , Pauli.I) + np.kron((Pauli.I - Pauli.Z) / 2 , Pauli.X))
+        CX=CNOT
 Q.Gate = Gate
 
 

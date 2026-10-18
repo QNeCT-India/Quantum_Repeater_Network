@@ -4,7 +4,7 @@ from qrnetwork import *
 # from qrnetwork import Q, Qp, Is, Ebit, Teleport, Qrep
 
 ## Define quantum states
-ket0 = Q([[1], [0]])
+#ket0 = Q([[1], [0]])
 # print(ket0)
 # ket0 = np.array([[1,0],[0,1]], dtype=complex)
 # ket1 = Q([[0], [1]])
@@ -14,7 +14,7 @@ ket0 = Q([[1], [0]])
 # X[0][0, 0] = 3
 # a = Q.Bell.phi_plus
 # b = [a.copy() for i in range(5)]
-print((ket0.dm()).expand_mixed([0],2))## Density matrix
+#print((ket0.dm()).expand_mixed([0],2))## Density matrix
 # print(StarProtocol.piecemaker(3))
 # qC = Q.Bell.phi_plus.dm()
 # qC = Q([[1], [0], [0], [1]]).dm()
