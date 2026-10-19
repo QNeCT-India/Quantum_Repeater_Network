@@ -116,3 +116,8 @@ print((ket0.dm()).expand_mixed([0],2))## Density matrix
 
 ## Print output
 # print(results)
+
+# Noisy Eswap Model
+# noise_init = eswap(Qp(Q.Bell.psi_plus).op(),Qp(Q.Bell.phi_minus).op())
+# res=noise_init.noise(L=10, T_p=1e-8, T_dp=1e-5, eta=0.3, p_d=1e-8)
+# print(res[0])
