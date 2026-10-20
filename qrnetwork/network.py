@@ -1,8 +1,12 @@
+from __future__ import annotations
 import numpy as np
 from . import qteleportation
 from . import primaryfn
+from . import Q
 from sympy import Matrix
 import warnings
+from dataclasses import dataclass, field
+from enum import Enum, auto
 # Change the default warning format
 def custom_warning_format(message, category, filename, lineno, line=None):
     return f"⚠️ {message}\n" # Just return warn message not category, filename, etc.
@@ -136,6 +140,8 @@ class eswap:
                        for k1 in K for k2 in K]
         rho1 = sum(primaryfn.Q(K) @ rhoin @ primaryfn.Q(K).d() for K in kraus_op_2q) 
         rho1 = rho1 / np.trace(rho1)
+        # rho1 = np.kron(self.qubits[0], self.qubits[1])
+
         # --- Dephasing ---
         lam_t = dephasing_coeff(T_p, T_dp, L)
         # For 2nd qubit
@@ -265,3 +271,72 @@ class QRep:
                 raise ValueError("The shared states are not entangled.")
         else:
             raise ValueError("Incorrect dimensions of the shared state.")
+
+
+# ---------------------------------------------------------------------------
+# Chain Topology & Memory Slots
+# ---------------------------------------------------------------------------
+class SlotStatus(Enum):
+    EMPTY = auto()
+    PENDING = auto()
+    READY = auto()
+
+
+@dataclass
+class MemorySlot:
+    owner_node: Node
+    faces_node: Node
+    status: SlotStatus = SlotStatus.EMPTY
+    link: Link | None = None
+
+
+@dataclass
+class Link:
+    rho: Q
+    ready_time: float
+    left_slot: MemorySlot
+    right_slot: MemorySlot
+
+    @property
+    def left_node(self) -> Node:
+        return self.left_slot.owner_node
+
+    @property
+    def right_node(self) -> Node:
+        return self.right_slot.owner_node
+
+
+@dataclass
+class Node:
+    index: int
+    is_end_node: bool
+    left_slots: list[MemorySlot] = field(default_factory=list)    #List of parallel 'left memory slots'
+    right_slots: list[MemorySlot] = field(default_factory=list)   #List of parallel 'right memory slots'
+
+
+class RepeaterChain:
+    def __init__(self, rep_nodes: int, n_parallel_slots: int):
+        if rep_nodes < 1:
+            raise ValueError("rep_nodes must be >= 1 (need at least one repeater)")
+        if n_parallel_slots < 1:
+            raise ValueError("n_parallel_slots must be >= 1")
+
+        self.rep_nodes = rep_nodes
+        self.n_parallel_slots = n_parallel_slots
+        self.nodes: list[Node] = [Node(index=i, is_end_node=(i == 0 or i == self.rep_nodes + 1)) for i in self.nodes_indices()]
+        for i in self.links_indices():
+            j = i + 1
+            for _ in range(n_parallel_slots):
+                ith_mem = MemorySlot(owner_node= self.nodes[i], faces_node= self.nodes[j])
+                jth_mem = MemorySlot(owner_node=self.nodes[j], faces_node=self.nodes[i])
+                self.nodes[i].right_slots.append(ith_mem)
+                self.nodes[j].left_slots.append(jth_mem)
+
+    def nodes_indices(self) -> range:
+        return range(self.rep_nodes + 2)
+
+    def repeater_indices(self) -> range:
+        return range(1, self.rep_nodes + 1)
+
+    def links_indices(self) -> range:
+        return range(self.rep_nodes + 1)

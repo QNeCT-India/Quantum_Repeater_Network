@@ -366,7 +366,7 @@ class Werner:
     def __new__(cls, p=None, state=None):
         if state is None:
             state = Q.Bell.phi_plus
-        bell_pure = state @ state.conj().T
+        bell_pure = state @ state.d()
         I4 = np.eye(4) / 4
         if p is None:
             p = np.random.uniform(low=1/2, high=1.0)
@@ -394,7 +394,8 @@ class Gate:
         S = Q(np.array([[1, 0], [0, 1j]], dtype=complex))
         T = Q(np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=complex))
         #CNOT gate
-        CX = Q(np.kron((Pauli.I + Pauli.Z) / 2 , Pauli.I) + np.kron((Pauli.I - Pauli.Z) / 2 , Pauli.X))
+        CNOT= Q(np.kron((Pauli.I + Pauli.Z) / 2 , Pauli.I) + np.kron((Pauli.I - Pauli.Z) / 2 , Pauli.X))
+        CX=CNOT
 Q.Gate = Gate
 
 

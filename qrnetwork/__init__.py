@@ -3,6 +3,7 @@ from .qteleportation import Teleport
 from .qchannel import QChannel
 from .network import eswap, QRep
 from .star_protocol import StarProtocol
+from .linear_noisy_sim import SimulationConfig, RepeaterSimulation
 
 
 # Define dagger for conjugate transpose (Hermitian adjoint) of an array or matrix
