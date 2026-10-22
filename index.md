@@ -95,6 +95,18 @@ Quantum states are represented either by a complex wave function or a complex co
 | `Q.Bell.all()` | Gives all the four Bell states. |
 | `Q.Pauli.I/X/Y/Z` | Gives one of the Pauli Matrices. |
 | `Q.Pauli.all()` | Gives all the Pauli matrices. |
+| `Q.basis(dim, index)` | Generates the computational-basis state with the specified index in a Hilbert space of dimension `dim`. For example, `Q.basis(2, 0)` generates the first basis state and `Q.basis(2, 1)` generates the second basis state. |
+| `Q.Cops.Cg(gate, n_qubits, control, target)` | Constructs a controlled single-qubit gate on an `n_qubits` register, applying `gate` to `target` when `control` qubit's state is ONE (1). |
+| `Q.Cops.Cx(n_qubits, control, target)` | Constructs a controlled-X (CNOT) operation with the specified control and target qubits. |
+| `Q.Cops.Cy(n_qubits, control, target)` | Constructs a controlled-Y operation with the specified control and target qubits. |
+| `Q.Cops.Cz(n_qubits, control, target)` | Constructs a controlled-Z operation with the specified control and target qubits. |
+| `Q.SWAP(n_qubits, qubit1, qubit2)` | Constructs an operator that swaps the states of `qubit1` and `qubit2` in an `n_qubits` register. |
+| `Q.Gate.H` | Gives the Hadamard gate. |
+| `Q.Gate.S` | Gives the S phase gate. |
+| `Q.Gate.T` | Gives the T phase gate. |
+| `Q.Gate.CNOT` | Gives the controlled-NOT gate. |
+| `Qp(states).tp()` | Computes the tensor product of the states/operators supplied to `Qp`; for example, `Qp(state1, state2).tp()`. |
+| `fold(operation, objects)` | Repeatedly applies a binary operation across the list or tuple of objects, reducing them to one result; for example, `fold(np.kron, [A, B, C])` computes their tensor product. |
 
 
 ### Entanglement Criterion

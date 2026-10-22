@@ -56,10 +56,50 @@ def channel_efficiency(L, L_att=22, loss=None):
         L_att = 10 * np.log10(np.e) / loss   # compute from loss in dB/km
     return np.exp(-L / L_att)
 
+# def dephasing_coeff(T_p, T_dp, L):
+#     c = 2 * 10**8  # speed of light in optical fiber (m/s)
+#     t = T_p + 2*L/c
+#     return (1 - np.exp(-t / T_dp)) / 2
 def dephasing_coeff(T_p, T_dp, L):
-    c = 2 * 10**8  # speed of light in optical fiber (m/s)
-    t = T_p + 2*L/c
-    return (1 - np.exp(-t / T_dp)) / 2
+    """
+    Calculate the dephasing probability.
+
+    Parameters
+    ----------
+    T_p : float
+        Entanglement-generation time in seconds.
+    T_dp : float
+        Dephasing time in seconds.
+    L : float
+        Fiber length in kilometres.
+
+    Returns
+    -------
+    float
+        Dephasing probability p_deph.
+    """
+    if L < 0:
+        raise ValueError("Fiber length L cannot be negative.")
+
+    if T_p < 0:
+        raise ValueError("Generation time T_p cannot be negative.")
+
+    if T_dp <= 0:
+        raise ValueError("Dephasing time T_dp must be positive.")
+
+    c = 2 * 10**8  # Speed of light in optical fiber, m/s
+
+    # Convert the fiber length from km to m.
+    L_m = 1000 * L
+
+    # Generation time + round-trip propagation time.
+    t = T_p + 2 * L_m / c
+
+    # Repository dephasing model.
+    p_deph = (1 - np.exp(-t / T_dp)) / 2
+
+    return p_deph
+
 
 def clicking_coeff(eta, p_d):
     eta_eff = 1 - (1 - eta) * (1 - p_d)**2
@@ -178,17 +218,127 @@ class eswap:
                                 })
         return results
 
+# class QRep:
+#     def __init__(self,state_shared,tol=1e-10):
+#         self.state_shared = state_shared
+#         self.tol = tol
+#         self.noise_params = None
+#     def noise(self, L, T_p, T_dp, eta, p_d, loss=None):
+#         """Enable noisy swapping with given parameters"""
+#         self.noise_params = {"L": L, "T_p": T_p, "T_dp": T_dp, "eta": eta, "p_d": p_d, "loss": loss}
+#         return self
+
 class QRep:
-    def __init__(self,state_shared,tol=1e-10):
+    def __init__(self, state_shared=None, tol=1e-10):
         self.state_shared = state_shared
         self.tol = tol
         self.noise_params = None
+
     def noise(self, L, T_p, T_dp, eta, p_d, loss=None):
-        """Enable noisy swapping with given parameters"""
-        self.noise_params = {"L": L, "T_p": T_p, "T_dp": T_dp, "eta": eta, "p_d": p_d, "loss": loss}
+        """
+        Enable the repository noise configuration.
+
+        L     : fiber length in km
+        T_p   : generation-time contribution in seconds
+        T_dp  : dephasing time in seconds
+        eta   : channel-efficiency parameter
+        p_d   : dark-count probability
+        loss  : optional fiber loss in dB/km
+        """
+        if L < 0:
+            raise ValueError("Fiber length L cannot be negative.")
+
+        if T_p < 0:
+            raise ValueError("Generation time T_p cannot be negative.")
+
+        if T_dp <= 0:
+            raise ValueError("Dephasing time T_dp must be positive.")
+
+        if not 0 <= eta <= 1:
+            raise ValueError("eta must be between 0 and 1.")
+
+        if not 0 <= p_d <= 1:
+            raise ValueError("p_d must be between 0 and 1.")
+
+        self.noise_params = {
+            "L": L,
+            "T_p": T_p,
+            "T_dp": T_dp,
+            "eta": eta,
+            "p_d": p_d,
+            "loss": loss,
+        }
+
         return self
+
+    def Star(
+        self,
+        link,
+        protocol="factory",
+        rounds=None,
+        verbose=False,
+    ):
+        """
+        Run the star-network protocol.
+
+        No noise:
+            QRep().Star(link=3)
+
+        With noise:
+            QRep().noise(...).Star(link=3)
+
+        protocol:
+            "factory" or "piecemaker"
+        """
+        from .StarProtocol import StarProtocol
+
+        if not isinstance(link, int) or isinstance(link, bool) or link < 2:
+            raise ValueError("link must be an integer greater than or equal to 2.")
+
+        if self.noise_params is None:
+            noise = False
+            Lambda = None
+
+        else:
+            noise = True
+
+            L = self.noise_params["L"]
+            T_p = self.noise_params["T_p"]
+            T_dp = self.noise_params["T_dp"]
+
+            p_deph = dephasing_coeff(T_p, T_dp, L)
+            Lambda = 1 - 2 * p_deph
+
+        protocol = protocol.lower()
+
+        if protocol == "factory":
+            return StarProtocol.factory(
+                link=link,
+                noise=noise,
+                Lambda=Lambda,
+                rounds=rounds,
+                verbose=verbose,
+            )
+
+        elif protocol == "piecemaker":
+            return StarProtocol.piecemaker(
+                link=link,
+                noise=noise,
+                Lambda=Lambda,
+                rounds=rounds,
+                verbose=verbose,
+            )
+
+        else:
+            raise ValueError(
+                "protocol must be 'factory' or 'piecemaker'."
+            )
     def linear(self):
         #---noisy case---
+        if self.state_shared is None:
+            raise ValueError(
+                "Provide shared entangled states: QRep(state_shared).linear()"
+            )
         if self.noise_params is not None:
             L, T_p, T_dp, eta, p_d, loss = (
                 self.noise_params["L"],

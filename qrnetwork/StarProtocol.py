@@ -18,18 +18,45 @@ eta = Q.Bell.phi_plus
 rho_0 = eta.dm()
 
 
+def ghz_fidelity(rho):
+    """Calculate fidelity with the standard N-qubit GHZ state."""
+
+    rho = rho.state if isinstance(rho, Q) else np.asarray(rho, dtype=complex)
+
+    dim = rho.shape[0]
+    n_qubits = int(np.log2(dim))
+
+    if rho.shape != (dim, dim) or 2**n_qubits != dim:
+        raise ValueError("rho must be a square density matrix of dimension 2**N.")
+
+    ghz = np.zeros((dim, 1), dtype=complex)
+    ghz[0, 0] = 1 / np.sqrt(2)
+    ghz[-1, 0] = 1 / np.sqrt(2)
+
+    return float(np.real((ghz.conj().T @ rho @ ghz).item()))
+
+
 # ============================================================
 # Helper Noise Channels
 # ============================================================
 def dephase_state_2qubit(rho_2qubit, Lambda, steps):
-    """Applies pure dephasing noise on the 1st (hub) qubit of an unentangled
-    two-qubit Bell link for `steps` rounds.
     """
+    Apply pure dephasing to the first (hub) qubit of a Bell link.
+
+    Lambda is the single-round coherence factor:
+        Lambda = exp(-t / T_dp)
+
+    After 'steps' rounds, coherence is reduced by Lambda**steps.
+    """
+    if not -1 <= Lambda <= 1:
+        raise ValueError("Lambda must lie between -1 and 1.")
+
     if steps <= 0:
         return rho_2qubit
 
     K_0 = np.sqrt((1 + Lambda) / 2) * II
     K_1 = np.sqrt((1 - Lambda) / 2) * ZZ
+
     K0_I = Qp(K_0, II).tp()
     K1_I = Qp(K_1, II).tp()
 
@@ -38,18 +65,26 @@ def dephase_state_2qubit(rho_2qubit, Lambda, steps):
             K0_I @ rho_2qubit @ K0_I.d()
             + K1_I @ rho_2qubit @ K1_I.d()
         )
+
     return rho_2qubit
 
 
 def dephase_hub_qubit(rho, n_qubits, hub_idx, Lambda, steps):
-    """Applies pure dephasing noise on the active central hub qubit inside an
-    n-qubit composite density matrix for `steps` rounds.
     """
+    Apply pure dephasing to one selected hub qubit in a composite state.
+    """
+    if not -1 <= Lambda <= 1:
+        raise ValueError("Lambda must lie between -1 and 1.")
+
+    if not 0 <= hub_idx < n_qubits:
+        raise ValueError("hub_idx is outside the composite state.")
+
     if steps <= 0:
         return rho
 
     k0_ops = [II] * n_qubits
     k1_ops = [II] * n_qubits
+
     k0_ops[hub_idx] = np.sqrt((1 + Lambda) / 2) * II
     k1_ops[hub_idx] = np.sqrt((1 - Lambda) / 2) * ZZ
 
@@ -58,6 +93,7 @@ def dephase_hub_qubit(rho, n_qubits, hub_idx, Lambda, steps):
 
     for _ in range(steps):
         rho = K0 @ rho @ K0.d() + K1 @ rho @ K1.d()
+
     return rho
 
 
@@ -202,7 +238,8 @@ class StarProtocol:
         # ----------------------------------------------------
         trace_qubits = set([1] + t)
         rho_final = rho.ptr(trace_qubits)
-        return rho_final
+        F = ghz_fidelity(rho_final)
+        return rho_final, f"fidelity = {F:.15f}"
 
     @staticmethod
     def piecemaker(
@@ -378,7 +415,8 @@ class StarProtocol:
         M_final.dims = [[2] * (e - 1), [2] * e]
         rho = M_final @ rho @ M_final.d()
 
-        return rho
+        F = ghz_fidelity(rho)
+        return rho, f"fidelity = {F:.15f}"
 
 
 # Convenience top-level instances / functions:
