@@ -4,18 +4,5 @@ from .qchannel import QChannel
 from .network import eswap, QRep
 from .star_protocol import StarProtocol
 from .linear_noisy_sim import SimulationConfig, RepeaterSimulation
-
-
-# Define dagger for conjugate transpose (Hermitian adjoint) of an array or matrix
-# def dag(matrix):
-#     return np.conj(matrix).T
-# setattr(np.ndarray, "dag", lambda self: np.conj(self).T)
-# Monkey-patch numpy arrays to use .dag like in QuTiP
-# If you want .dag() syntax on arrays → keep the setattr trick.
-# If you’re okay with dag(A) function calls → you don’t need it.
-
-
-
-
-
-
+from .simulator import (QNeCTSimulator, StarConfig, UnifiedResult, simulate,
+                        ghz_state, ghz_fidelity, LINEAR_POLICIES, STAR_PROTOCOLS, MAX_STAR_LINKS)

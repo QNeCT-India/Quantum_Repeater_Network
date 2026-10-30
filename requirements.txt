@@ -1,4 +1,5 @@
 numpy
 scipy
 sympy
-streamlit
+pandas
+streamlit>=1.50
